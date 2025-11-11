@@ -1,8 +1,33 @@
-import express, { json, request, response } from 'express'
+import express from 'express'
+import mongoose from 'mongoose'
+import 'dotenv/config' // маэ бути першим ныж note
+import Note from './models/note.js'
 
 const app = express()
 
 app.use(express.json())
+
+const password = process.argv[2]
+
+// const url = `mongodb+srv://andriiyakovliev_db_user:${password}@cluster0.ofddtyl.mongodb.net/noteApp?retryWrites=true&w=majority&appName=Cluster0`
+
+// mongoose.set('strictQuery', false)
+// mongoose.connect(url)
+
+// const noteSchema = new mongoose.Schema({
+//     content: String,
+//     important: Boolean,
+// })
+
+// noteSchema.set('toJSON', {
+//     transform: (document, returnedObject) => {
+//         returnedObject.id = returnedObject._id.toString()
+//         delete returnedObject._id
+//         delete returnedObject.__v
+//     }
+// })
+
+// const Note = mongoose.model('Note', noteSchema)
 
 let notes = [
     {
@@ -32,7 +57,10 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/notes', (request, response) => {
-    response.json(notes)
+    // response.json(notes)
+    Note.find({}).then(notes => {
+        response.json(notes)
+    })
 })
 
 app.get('/api/notes/:id', (request, response) => {
@@ -41,15 +69,23 @@ app.get('/api/notes/:id', (request, response) => {
     if (note) {
         response.json(note)
     } else {
-        response.status(404).end
+        response.status(404).end()
     }
 })
 
-app.delete('/api/notes/:id', (request, response) => {
-    const id = request.params.id
-    notes = notes.filter(note => note.id !== id)
 
-    response.status(204).end()
+app.delete('/api/notes/:id', (request, response) => {
+    // const id = request.params.id
+    // notes = notes.filter(note => note.id !== id)
+
+    // response.status(204).end()
+
+    Note.findById(request.params.id)
+        .then(note => {
+            response.json(note)
+            console.log(note);
+
+        })
 })
 
 const generateId = () => {
@@ -65,7 +101,7 @@ app.post('/api/notes', (request, response) => {
     console.log(body);
 
     if (!body.content) {
-        return response.status(400), json(
+        return response.status(400).json(
             {
                 error: 'content missing'
             }
@@ -88,7 +124,7 @@ app.post('/api/notes', (request, response) => {
 
 })
 
-const PORT = 3001
+const PORT = process.env.PORT
 // app.listen(PORT)
 // console.log(`Server running on port ${PORT}`)
 app.listen(PORT, () => {
